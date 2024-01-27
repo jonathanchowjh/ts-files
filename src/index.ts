@@ -1,4 +1,5 @@
 import { CsvFile } from '../utils/csvFile';
+import { FileStaticMethods } from '../utils/fsStatic';
 
 /* eslint-disable no-console */
 
@@ -24,9 +25,8 @@ const main = async () => {
   fileWrite.setData(data);
   fileWrite.appendLine(data[0]);
   await fileWrite.writeCsv();
-  await fileWrite.appendCsvUpdate();
   await fileWrite.appendCsv(); // RESETS data
-  await fileWrite.appendCsvLine(); // RESETS data
+  await fileWrite.appendCsvLine();
 
   // file.readJson() => Record<Array<number | string>>
   // file.writeJson()
