@@ -1,23 +1,17 @@
-import fs from "fs";
-import path from "path";
 import { FileStaticMethods } from "./fsStatic";
 
-export class FileMethods {
+export class CsvFile {
   public static static = FileStaticMethods;
 
   public readonly fileName: string = "";
 
-  public readonly type: string = "";
-
   public readonly encoding: BufferEncoding;
-
-  private format: "csv" | "json" | "string" | "unassigned" = "unassigned";
 
   private stringData: string = "";
 
   private csvData: Array<Array<string | number | boolean>> = [];
 
-  private csvHeader: any[] = [];
+  private csvHeader: Array<string> = [];
 
   private csvLastLine: string = "";
 
@@ -28,27 +22,23 @@ export class FileMethods {
   constructor(fileName: string, options={encoding: 'utf8'}) {
     this.fileName = fileName;
     this.encoding = options.encoding as BufferEncoding;
-    if (this.fileName.endsWith(".json")) {
-      this.type = "json";
-    } else if (this.fileName.endsWith(".csv")) {
-      this.type = "csv";
-    } else {
-      this.type = "txt"
+    if (!this.fileName.endsWith(".csv")) {
+      throw new Error("invalid file type")
     }
   }
 
   static async init(fileName: string) {
-    const fullLoc = await FileMethods.static.root(fileName);
-    if ((await FileMethods.static.isValid(fullLoc)) !== "FILE") {
+    const fullLoc = await CsvFile.static.root(fileName);
+    if ((await CsvFile.static.isValid(fullLoc)) !== "FILE") {
       throw new Error("Invalid file location");
     }
-    return new FileMethods(fullLoc);
+    return new CsvFile(fullLoc);
   }
 
   static async initCreate(fileName: string) {
-    const fullLoc = await FileMethods.static.root(fileName);
-    await FileMethods.static.createIfNotExist(fullLoc);
-    return FileMethods.init(fileName);
+    const fullLoc = await CsvFile.static.root(fileName);
+    await CsvFile.static.createIfNotExist(fullLoc);
+    return CsvFile.init(fileName);
   }
   
   data() {
@@ -81,8 +71,12 @@ export class FileMethods {
   }
 
   async read(): Promise<string> {
-    this.stringData = await FileMethods.static.read(this.fileName);
+    this.stringData = await CsvFile.static.read(this.fileName);
     return this.stringData;
+  }
+
+  async write(data: string): Promise<void> {
+    return CsvFile.static.write(this.fileName, data);
   }
 
   async readCsv(
@@ -102,9 +96,8 @@ export class FileMethods {
     this.csvData = [];
     this.csvLastLine = "";
     this.csvHeaderLines = csvHeaderLines;
-    this.format = "csv";
     this.csvLineLength = 0;
-    await FileMethods.static.readStream(
+    await CsvFile.static.readStream(
       this.fileName,
       {
         encoding: options.encoding,
@@ -117,8 +110,38 @@ export class FileMethods {
     return this.csvData;
   }
 
-  async write(data: string): Promise<void> {
-    return FileMethods.static.write(this.fileName, data);
+  setHeader(
+    header: Array<string>
+  ) {
+
+  }
+
+  setData(
+    array2D: Array<Array<string | number | boolean>>
+  ) {
+
+  }
+
+  appendLine(
+    array2D: Array<Array<string | number | boolean>>
+  ) {
+
+  }
+
+  async writeCsv(): Promise<void> {
+    // this.data = array2D;
+  }
+
+  async appendCsv(): Promise<void> {
+    // this.data = array2D;
+  }
+
+  async appendCsvLine(): Promise<void> {
+    // this.data = array2D;
+  }
+
+  async appendCsvUpdate(): Promise<void> {
+    // this.data = array2D;
   }
 
   /**
@@ -126,6 +149,15 @@ export class FileMethods {
    * PRIVATE METHODS
    * ============================================
    */
+  private resetState() {
+    this.csvData = [];
+    this.csvHeader = [];
+    this.csvHeaderLines = 1;
+    this.csvLastLine = "";
+    this.csvLineLength = 0;
+    this.stringData = "";
+  }
+
   private processEnd (options: {
     encoding: BufferEncoding;
     delimiter: string;
@@ -139,9 +171,9 @@ export class FileMethods {
   }) {
     return (data: string): string => {
       this.csvData.push(
-        FileMethods
+        CsvFile
           .splitText(this.csvLastLine, this.csvLineLength, options.delimiter)
-          .map((column) => FileMethods.formatData(column, options.columnOptions))
+          .map((column) => CsvFile.formatData(column, options.columnOptions))
       )
       return ""
     }
@@ -167,7 +199,7 @@ export class FileMethods {
         // PROCESS LINE
         for (let i = 0; i < lines.length - 1; i++) {
           const isHeader = isFirstChunk && this.csvHeaderLines > i;
-          const columns = FileMethods.splitText(
+          const columns = CsvFile.splitText(
             lines[i],
             this.csvLineLength,
             options.delimiter,
@@ -181,13 +213,19 @@ export class FileMethods {
             continue;
           }
           this.csvData.push(
-            columns.map((column) => FileMethods.formatData(column, options.columnOptions))
+            columns.map((column) => CsvFile.formatData(column, options.columnOptions))
           );
         }
         return "";  // return data + chunk; // (if you want readStream function to perform accumulation)
       }
     )
   }
+
+  /**
+   * ============================================
+   * PRIVATE STATIC METHODS
+   * ============================================
+   */
 
   private static formatData = (
     column: string,
@@ -236,8 +274,3 @@ export class FileMethods {
     return ret;
   }
 }
-
-
-
-
-

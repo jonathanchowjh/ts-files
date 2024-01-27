@@ -1,7 +1,7 @@
-import { FileMethods } from "../utils/fs";
+import { FileStaticMethods } from "../utils/fsStatic"
 import path from "path";
 
-const fsStatic = FileMethods.static
+const fsStatic = FileStaticMethods;
 
 describe('fs static', () => {
   beforeAll(async () => {
@@ -129,20 +129,20 @@ describe('fs static', () => {
 
   test('static function: rootFromPath', async () => {
     const root = await fsStatic.rootFromPath();
-    // Points to root folder, fs-methods, location of package.json
-    expect(root.endsWith("fs-methods")).toBe(true);
+    // Points to root folder, ts-files, location of package.json
+    expect(root.endsWith("ts-files")).toBe(true);
   });
 
   test('static function: rootDefault', async () => {
     const root = await fsStatic.rootDefault();
-    // Points to root folder, fs-methods, location of package.json or node_modules
-    expect(root.endsWith("fs-methods")).toBe(true);
+    // Points to root folder, ts-files, location of package.json or node_modules
+    expect(root.endsWith("ts-files")).toBe(true);
   });
 
   test('static function: root', async () => {
     const root = await fsStatic.root("tests/testDir");
     // Gives Absolute Path, given relative path from rootFolder
-    expect(root.endsWith("fs-methods/tests/testDir")).toBe(true);
+    expect(root.endsWith("ts-files/tests/testDir")).toBe(true);
   });
 
   test('static function: isValidPath', async () => {

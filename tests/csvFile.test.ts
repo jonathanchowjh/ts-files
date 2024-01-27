@@ -1,6 +1,5 @@
-import { FileMethods } from "../utils/fs";
+import { CsvFile } from "../utils/csvFile";
 import { resetDir } from "./fsStatic.test";
-import path from "path";
 
 describe('fs', () => {
   beforeAll(async () => {
@@ -8,8 +7,6 @@ describe('fs', () => {
   });
 
   test('function: writeStream', async () => {
-    const file = new FileMethods("fs.test.ts")
-    await file.validFileName()
-    expect("abc").toBe("abc");
+    
   });
 });
