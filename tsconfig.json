@@ -1,0 +1,17 @@
+{
+  "include": [
+    "src/**.ts",
+    "tests/**.ts",
+    "utils/**.ts",
+    "types/global.d.ts"
+  ],
+  "compilerOptions": {
+    "target": "ESNext",
+    "moduleResolution": "node",
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true
+  }
+}
