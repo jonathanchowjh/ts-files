@@ -11,15 +11,19 @@ export class FileMethods {
 
   public readonly encoding: BufferEncoding;
 
-  private data: any = "";
+  private format: "csv" | "json" | "string" | "unassigned" = "unassigned";
 
-  private lastLine: string = "";
+  private stringData: string = "";
 
-  private headerLines: number = 1;
+  private csvData: Array<Array<string | number | boolean>> = [];
 
-  private format: string = "";
+  private csvHeader: any[] = [];
 
-  private noOfColumns: number = 0;
+  private csvLastLine: string = "";
+
+  private csvHeaderLines: number = 1;
+
+  private csvLineLength: number = 0;
 
   constructor(fileName: string, options={encoding: 'utf8'}) {
     this.fileName = fileName;
@@ -46,26 +50,43 @@ export class FileMethods {
     await FileMethods.static.createIfNotExist(fullLoc);
     return FileMethods.init(fileName);
   }
+  
+  data() {
+    return this.csvData;
+  }
 
-  head(length=3) {
-    if (Array.isArray(this.data)) {
-      return this.data.slice(0, Math.min(length, this.data.length));
-    }
-    const lengthWords = 3 ? 500 : length;
-    return this.data.slice(0, Math.min(lengthWords, this.data.length));
+  header() {
+    return this.csvHeader;
   }
 
   shape() {
-    return [0, 1];
+    return [this.csvData.length, this.csvLineLength];
+  }
+
+  head(length=3) {
+    const ret = [];
+    for (let i = 0; i < length; i++) {
+      const temp: Record<string, string | number | boolean> = {}
+      this.csvData[i].forEach((val, idx) => {
+        const index = this.csvHeader[idx];
+        if (typeof index === "string") {
+          temp[index as string] = val;
+          return;
+        }
+        temp[idx.toString()] = val;
+      })
+      ret.push(temp)
+    }
+    console.table(ret);
   }
 
   async read(): Promise<string> {
-    this.data = await FileMethods.static.read(this.fileName);
-    return this.data;
+    this.stringData = await FileMethods.static.read(this.fileName);
+    return this.stringData;
   }
 
   async readCsv(
-    headerLines=1,
+    csvHeaderLines=1,
     options={
       encoding: this.encoding,
       delimiter: ",",
@@ -78,21 +99,22 @@ export class FileMethods {
       }
     }
   ): Promise<Array<Array<string | number | boolean>>> {
-    this.data = [];
-    this.lastLine = "";
-    this.headerLines = headerLines;
+    this.csvData = [];
+    this.csvLastLine = "";
+    this.csvHeaderLines = csvHeaderLines;
     this.format = "csv";
+    this.csvLineLength = 0;
     await FileMethods.static.readStream(
       this.fileName,
       {
         encoding: options.encoding,
         appendType: 'string', // string / bufferArray
-        onData: this.processChunk(options),
-        onEnd: (data: string): string => data,
+        onData: this.processData(options),
+        onEnd: this.processEnd(options),
         onError: (err: Error): void => {},
       }
     );
-    return this.data;
+    return this.csvData;
   }
 
   async write(data: string): Promise<void> {
@@ -104,7 +126,28 @@ export class FileMethods {
    * PRIVATE METHODS
    * ============================================
    */
-  private processChunk (options: {
+  private processEnd (options: {
+    encoding: BufferEncoding;
+    delimiter: string;
+    columnOptions: {
+      trim: boolean;
+      ltrim: boolean;
+      rtrim: boolean;
+      parseBooleans: boolean;
+      parseNumbers: boolean;
+    };
+  }) {
+    return (data: string): string => {
+      this.csvData.push(
+        FileMethods
+          .splitText(this.csvLastLine, this.csvLineLength, options.delimiter)
+          .map((column) => FileMethods.formatData(column, options.columnOptions))
+      )
+      return ""
+    }
+  }
+
+  private processData (options: {
     encoding: BufferEncoding;
     delimiter: string;
     columnOptions: {
@@ -117,42 +160,36 @@ export class FileMethods {
   }): (a: string, b: string | Buffer) => string {
     return (
       (data: string, chunk: string | Buffer): string => {
-        let processHeaderLines = false;
-        if (this.data.length === 0) processHeaderLines = true;
         // PROCESS CHUNK
-        const lines = (this.lastLine + chunk.toString()).split("\n"); // this.lastLine needs to be cleared
-        this.lastLine = lines[lines.length - 1];
+        const lines = (this.csvLastLine + chunk.toString()).split("\n"); // this.csvLastLine needs to be cleared
+        this.csvLastLine = lines[lines.length - 1];
+        const isFirstChunk = this.csvData.length === 0;
         // PROCESS LINE
         for (let i = 0; i < lines.length - 1; i++) {
-          const columns = lines[i]
-            .split(options.delimiter)
-            .map((column) => FileMethods.processData(column, options.columnOptions))
-          this.data.push(columns);  // this.data needs to be cleared
-        }
-        // PROCESS HEADERLINES
-        // process headers => all same length, determines length of shape
-        // process lines (shape) => if line = 0, first line length is length of shape
-        // process lines => less than length, create empty string columns / more than length, last column as string
-        if (processHeaderLines) {
-          if (!Array.isArray(this.data)) throw new Error("Invalid type");
-          if (this.data.length < this.headerLines) throw new Error("Too many header lines");
-          if (
-            !(
-              this.data
-                .slice(0, this.headerLines)
-                .every(val => val === this.data[0])
-            )
-          ) {
-            throw new Error("")
+          const isHeader = isFirstChunk && this.csvHeaderLines > i;
+          const columns = FileMethods.splitText(
+            lines[i],
+            this.csvLineLength,
+            options.delimiter,
+            isHeader || this.csvLineLength === 0
+          )
+          if (this.csvLineLength === 0) {
+            this.csvLineLength = columns.length;
           }
-          
+          if (isHeader && this.csvHeader.length < columns.length) {
+            this.csvHeader = columns;
+            continue;
+          }
+          this.csvData.push(
+            columns.map((column) => FileMethods.formatData(column, options.columnOptions))
+          );
         }
-        return data + chunk;
+        return "";  // return data + chunk; // (if you want readStream function to perform accumulation)
       }
     )
   }
 
-  private static processData = (
+  private static formatData = (
     column: string,
     options={
       trim: true,
@@ -181,6 +218,23 @@ export class FileMethods {
     }
     return column;
   };
+
+  private static splitText(
+    text: string, segments: number, delimiter=",", useDefault=false
+  ) {
+    if (useDefault) return text.split(delimiter);
+    const ret: string[] = []
+    let lastIdx = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === delimiter) {
+        ret.push(text.slice(lastIdx, i));
+        lastIdx = i + 1;
+        if (segments === ret.length + 1) break;
+      }
+    }
+    ret.push(text.slice(lastIdx, text.length));
+    return ret;
+  }
 }
 
 
