@@ -2,16 +2,16 @@
 /* eslint-disable eqeqeq */
 /* eslint-disable arrow-body-style */
 
-// Usage: throw new UtilsError("err msg")
+// Usage: throw new UtilsError('err msg')
 export class UtilsError extends Error {
   constructor(error: string, errorSource?: string) {
-    const name = `${errorSource ?? "ts-methods"}::${stackTrace()[1]}::${error}`;
+    const name = `${errorSource ?? 'ts-methods'}::${stackTrace()[1]}::${error}`;
     super(name);
     Object.setPrototypeOf(this, UtilsError.prototype);
   }
 }
 
-// Usage: throw new DefaultError("err msg")
+// Usage: throw new DefaultError('err msg')
 export class DefaultError extends Error {
   constructor(msg: string) {
     super(msg);
@@ -25,23 +25,23 @@ export const stackTrace = (
   noDataParsing?: boolean,
   noFilterTrace?: boolean
 ): string[] => {
-  const obj = { stack: "" };
+  const obj = { stack: '' };
   Error.captureStackTrace(obj, stackTrace);
-  if (noFilter) return obj.stack.split("\n");
+  if (noFilter) return obj.stack.split('\n');
   return obj.stack
-    .split("\n")
+    .split('\n')
     .splice(1)
     .map((val: string) => {
       // remove parenthesis and formatted spacing
       if (noDataParsing) return val;
-      return val.replace("    at ", "").replace(/\s*\(.*?\)\s*/g, "");
+      return val.replace('    at ', '').replace(/\s*\(.*?\)\s*/g, '');
     })
     .filter((val: string) => {
       // filter stacktrace using keys
       if (noFilterTrace) return true;
-      if (val === "" || val == undefined || val == null) return false;
-      const words = ["Module.", "Object.", "Function.", "file://"];
-      return !new RegExp(words.join("|")).test(val);
+      if (val === '' || val == undefined || val == null) return false;
+      const words = ['Module.', 'Object.', 'Function.', 'file://'];
+      return !new RegExp(words.join('|')).test(val);
     });
 };
 
@@ -54,7 +54,7 @@ export const catchError = async <R>(
     return callback();
   } catch (error: unknown) {
     if (!isError(error)) {
-      throw new UtilsError("Invalid Error Thrown");
+      throw new UtilsError('Invalid Error Thrown');
     }
     // eslint-disable-next-line no-console
     console.log(`ERROR CAUGHT => ${error.message}`);
@@ -73,7 +73,7 @@ export const catchError = async <R>(
 
 // Usage: coerceNotNullish(null) => throws
 export const coerceNotNullish = <T>(val: T): NonNullable<T> => {
-  if (isNullish(val)) throw new UtilsError("value is null | undefined");
+  if (isNullish(val)) throw new UtilsError('value is null | undefined');
   return val as NonNullable<T>;
 };
 
@@ -87,17 +87,16 @@ export const isNullish = (val: any): boolean => {
 // Usage: coerceNotNull(null) => throws
 export type NonNull<T> = T extends null ? never : T;
 export const coerceNotNull = <T>(val: T): NonNull<T> => {
-  if (isNull(val)) throw new UtilsError("value is null");
+  if (isNull(val)) throw new UtilsError('value is null');
   return val as NonNull<T>;
 };
 
 // Usage: isNull(null) => true
-export const isNull = (val: any): boolean =>
-  val == null && typeof val == "object";
+export const isNull = (val: any): boolean => val == null && typeof val == 'object';
 
 // Usage: coerceArray<object, any>([]) => []
 export const coerceArray = <T, U>(val: U): Array<T> => {
-  if (!isArray(val)) throw new UtilsError("value is not Array");
+  if (!isArray(val)) throw new UtilsError('value is not Array');
   return val as Array<T>;
 };
 
@@ -117,8 +116,7 @@ export const coerceError = (maybeError: unknown): Error => {
 };
 
 // Usage: isError(err) => error is Error
-export const isError = (error: unknown): error is Error =>
-  typeof error === "object" &&
-  error !== null &&
-  "message" in error &&
-  typeof (error as Record<string, unknown>).message === "string";
+export const isError = (error: unknown): error is Error => typeof error === 'object'
+  && error !== null
+  && 'message' in error
+  && typeof (error as Record<string, unknown>).message === 'string';

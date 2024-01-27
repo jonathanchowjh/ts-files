@@ -1,0 +1,7 @@
+node_modules/*
+artifacts/*
+cache/*
+dist/*
+storage
+storage/*
+.DS_Store

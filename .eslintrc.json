@@ -1,0 +1,43 @@
+{
+  "env": {
+    "browser": false,
+    "es2021": true
+  },
+  "extends": ["airbnb-base"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "import/prefer-default-export": "off",
+    "no-underscore-dangle": "off"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.js"],
+      "rules": {
+        "import/no-extraneous-dependencies": "off",
+        "import/no-unresolved": "off",
+        "import/extensions": "off",
+        "no-use-before-define": "off",
+        "no-plusplus": "off",
+        "no-await-in-loop": "off",
+        "eqeqeq": "off",
+        "consistent-return": "off",
+        "no-unused-expressions": "off",
+        "comma-dangle": "off",
+        "no-async-promise-executor": "off",
+        "no-unused-vars": "off",
+        "no-continue": "off",
+        "no-undef": "off",
+        "prefer-promise-reject-errors": "off",
+        "no-restricted-syntax": "off"
+      }
+    }
+  ]
+}
+// eslint-disable-next-line
+/* eslint-disable */
+/* eslint-enable */

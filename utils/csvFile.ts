@@ -1,36 +1,36 @@
-import { FileStaticMethods } from "./fsStatic";
+import { FileStaticMethods } from './fsStatic';
 
 export class CsvFile {
   public static static = FileStaticMethods;
 
-  public readonly fileName: string = "";
+  public readonly fileName: string = '';
 
   public readonly encoding: BufferEncoding;
 
-  private stringData: string = "";
+  private stringData: string = '';
 
   private csvData: Array<Array<string | number | boolean>> = [];
 
   private csvHeader: Array<string> = [];
 
-  private csvLastLine: string = "";
+  private csvLastLine: string = '';
 
   private csvHeaderLines: number = 1;
 
   private csvLineLength: number = 0;
 
-  constructor(fileName: string, options={encoding: 'utf8'}) {
+  constructor(fileName: string, options = { encoding: 'utf8' }) {
     this.fileName = fileName;
     this.encoding = options.encoding as BufferEncoding;
-    if (!this.fileName.endsWith(".csv")) {
-      throw new Error("invalid file type")
+    if (!this.fileName.endsWith('.csv')) {
+      throw new Error('invalid file type');
     }
   }
 
   static async init(fileName: string) {
     const fullLoc = await CsvFile.static.root(fileName);
-    if ((await CsvFile.static.isValid(fullLoc)) !== "FILE") {
-      throw new Error("Invalid file location");
+    if ((await CsvFile.static.isValid(fullLoc)) !== 'FILE') {
+      throw new Error('Invalid file location');
     }
     return new CsvFile(fullLoc);
   }
@@ -40,7 +40,7 @@ export class CsvFile {
     await CsvFile.static.createIfNotExist(fullLoc);
     return CsvFile.init(fileName);
   }
-  
+
   data() {
     return this.csvData;
   }
@@ -53,20 +53,21 @@ export class CsvFile {
     return [this.csvData.length, this.csvLineLength];
   }
 
-  head(length=3) {
+  head(length = 3) {
     const ret = [];
     for (let i = 0; i < length; i++) {
-      const temp: Record<string, string | number | boolean> = {}
+      const temp: Record<string, string | number | boolean> = {};
       this.csvData[i].forEach((val, idx) => {
         const index = this.csvHeader[idx];
-        if (typeof index === "string") {
+        if (typeof index === 'string') {
           temp[index as string] = val;
           return;
         }
         temp[idx.toString()] = val;
-      })
-      ret.push(temp)
+      });
+      ret.push(temp);
     }
+    // eslint-disable-next-line
     console.table(ret);
   }
 
@@ -80,10 +81,10 @@ export class CsvFile {
   }
 
   async readCsv(
-    csvHeaderLines=1,
-    options={
+    csvHeaderLines = 1,
+    options = {
       encoding: this.encoding,
-      delimiter: ",",
+      delimiter: ',',
       columnOptions: {
         trim: true,
         ltrim: false,
@@ -94,7 +95,7 @@ export class CsvFile {
     }
   ): Promise<Array<Array<string | number | boolean>>> {
     this.csvData = [];
-    this.csvLastLine = "";
+    this.csvLastLine = '';
     this.csvHeaderLines = csvHeaderLines;
     this.csvLineLength = 0;
     await CsvFile.static.readStream(
@@ -113,35 +114,35 @@ export class CsvFile {
   setHeader(
     header: Array<string>
   ) {
-
+    this.data = [] as any;
   }
 
   setData(
     array2D: Array<Array<string | number | boolean>>
   ) {
-
+    this.data = [] as any;
   }
 
   appendLine(
     array2D: Array<Array<string | number | boolean>>
   ) {
-
+    this.data = [] as any;
   }
 
   async writeCsv(): Promise<void> {
-    // this.data = array2D;
+    this.data = [] as any;
   }
 
   async appendCsv(): Promise<void> {
-    // this.data = array2D;
+    this.data = [] as any;
   }
 
   async appendCsvLine(): Promise<void> {
-    // this.data = array2D;
+    this.data = [] as any;
   }
 
   async appendCsvUpdate(): Promise<void> {
-    // this.data = array2D;
+    this.data = [] as any;
   }
 
   /**
@@ -153,12 +154,12 @@ export class CsvFile {
     this.csvData = [];
     this.csvHeader = [];
     this.csvHeaderLines = 1;
-    this.csvLastLine = "";
+    this.csvLastLine = '';
     this.csvLineLength = 0;
-    this.stringData = "";
+    this.stringData = '';
   }
 
-  private processEnd (options: {
+  private processEnd(options: {
     encoding: BufferEncoding;
     delimiter: string;
     columnOptions: {
@@ -174,12 +175,12 @@ export class CsvFile {
         CsvFile
           .splitText(this.csvLastLine, this.csvLineLength, options.delimiter)
           .map((column) => CsvFile.formatData(column, options.columnOptions))
-      )
-      return ""
-    }
+      );
+      return '';
+    };
   }
 
-  private processData (options: {
+  private processData(options: {
     encoding: BufferEncoding;
     delimiter: string;
     columnOptions: {
@@ -193,7 +194,7 @@ export class CsvFile {
     return (
       (data: string, chunk: string | Buffer): string => {
         // PROCESS CHUNK
-        const lines = (this.csvLastLine + chunk.toString()).split("\n"); // this.csvLastLine needs to be cleared
+        const lines = (this.csvLastLine + chunk.toString()).split('\n'); // this.csvLastLine needs to be cleared
         this.csvLastLine = lines[lines.length - 1];
         const isFirstChunk = this.csvData.length === 0;
         // PROCESS LINE
@@ -204,7 +205,7 @@ export class CsvFile {
             this.csvLineLength,
             options.delimiter,
             isHeader || this.csvLineLength === 0
-          )
+          );
           if (this.csvLineLength === 0) {
             this.csvLineLength = columns.length;
           }
@@ -216,9 +217,9 @@ export class CsvFile {
             columns.map((column) => CsvFile.formatData(column, options.columnOptions))
           );
         }
-        return "";  // return data + chunk; // (if you want readStream function to perform accumulation)
+        return ''; // return data + chunk; // (if you want readStream function to perform accumulation)
       }
-    )
+    );
   }
 
   /**
@@ -227,41 +228,45 @@ export class CsvFile {
    * ============================================
    */
 
-  private static formatData = (
+  private static formatData(
     column: string,
-    options={
+    options = {
       trim: true,
       ltrim: false,
       rtrim: false,
       parseBooleans: true,
       parseNumbers: true
     }
-  ): string | number | boolean => {
+  ): string | number | boolean {
     const PARSE_FLOAT_TEST = /^[-+]?\d+(?:\.\d*)?(?:[eE]\+\d+)?$|^(?:\d+)?\.\d+(?:e+\d+)?$|^[-+]?Infinity$|^[-+]?NaN$/;
+    let col = column;
     if (options.trim) {
-      column = column.trim();
+      col = col.trim();
     } else if (options.ltrim) {
-      column = column.replace(/^\s+/, '');
+      col = col.replace(/^\s+/, '');
     } else if (options.rtrim) {
-      column = column.replace(/\s+$/, '');
+      col = col.replace(/\s+$/, '');
     }
     if (options.parseBooleans) {
-      if (column === 'true') return true;
-      if (column === 'false') return false;
+      if (col === 'true') return true;
+      if (col === 'false') return false;
     }
     if (options.parseNumbers) {
-      if (PARSE_FLOAT_TEST.test(column)) {
-        return parseFloat(column);
+      if (PARSE_FLOAT_TEST.test(col)) {
+        return parseFloat(col);
       }
     }
-    return column;
-  };
+    return col;
+  }
 
   private static splitText(
-    text: string, segments: number, delimiter=",", useDefault=false
+    text: string,
+    segments: number,
+    delimiter = ',',
+    useDefault = false
   ) {
     if (useDefault) return text.split(delimiter);
-    const ret: string[] = []
+    const ret: string[] = [];
     let lastIdx = 0;
     for (let i = 0; i < text.length; i++) {
       if (text[i] === delimiter) {

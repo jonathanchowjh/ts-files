@@ -1,14 +1,5 @@
-# ts-files
-A File reader and writer, for large multi-chunk operations. Works with CSV, JSON, and raw text.
-
-The File operations uses both the fs and stream libraries, with increased customisability and helpful defaults to help prevent string size restrictions, ulimit errors, synchronous write limitations, etc. In addition, many helpful features include JSON structure searches, type parsing, and column based edits.
-### ⚙️ Installation
-```sh
-npm i ts-files
-```
-### 🚀 Quickstart
-```ts
-import { CsvFile, FileStaticMethods } from 'ts-files'
+/* eslint-disable */
+import { CsvFile, FileStaticMethods } from "ts-files"
 
 const main = async () => {
   const file = await CsvFile.init('sample.csv');
@@ -25,4 +16,3 @@ const main = async () => {
 };
 
 main().then(() => {});
-```
