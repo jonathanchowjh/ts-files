@@ -114,19 +114,21 @@ export class CsvFile {
   setHeader(
     header: Array<string>
   ) {
-    this.data = [] as any;
+    if (this.csvHeader.length !== 0) throw new Error('header already initialised');
+    this.csvHeader = header;
   }
 
   setData(
-    array2D: Array<Array<string | number | boolean>>
+    data: Array<Array<string | number | boolean>>
   ) {
-    this.data = [] as any;
+    if (this.csvData.length !== 0) throw new Error('data already initialised');
+    this.csvData = data;
   }
 
   appendLine(
-    array2D: Array<Array<string | number | boolean>>
+    line: Array<string | number | boolean>
   ) {
-    this.data = [] as any;
+    this.csvData.push(line);
   }
 
   async writeCsv(): Promise<void> {
@@ -145,12 +147,7 @@ export class CsvFile {
     this.data = [] as any;
   }
 
-  /**
-   * ============================================
-   * PRIVATE METHODS
-   * ============================================
-   */
-  private resetState() {
+  resetState() {
     this.csvData = [];
     this.csvHeader = [];
     this.csvHeaderLines = 1;
@@ -159,6 +156,11 @@ export class CsvFile {
     this.stringData = '';
   }
 
+  /**
+   * ============================================
+   * PRIVATE METHODS
+   * ============================================
+   */
   private processEnd(options: {
     encoding: BufferEncoding;
     delimiter: string;

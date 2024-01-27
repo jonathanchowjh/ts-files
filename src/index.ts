@@ -22,7 +22,7 @@ const main = async () => {
   const fileWrite = await CsvFile.initCreate('tests/testDir/new.csv');
   fileWrite.setHeader(header);
   fileWrite.setData(data);
-  fileWrite.appendLine(data);
+  fileWrite.appendLine(data[0]);
   await fileWrite.writeCsv();
   await fileWrite.appendCsvUpdate();
   await fileWrite.appendCsv(); // RESETS data
