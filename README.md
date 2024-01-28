@@ -1,4 +1,5 @@
 # ts-files
+### BETA RELEASE: the writer is not completed, details below
 A File reader and writer, for large multi-chunk operations. Works with CSV, JSON, and raw text.
 
 The File operations uses both the fs and stream libraries, with increased customisability and helpful defaults to help prevent string size restrictions, ulimit errors, synchronous write limitations, etc. In addition, many helpful features include JSON structure searches, type parsing, and column based edits.
@@ -19,7 +20,7 @@ const main = async () => {
   file.head(3);           // console.table of first 3 lines
   file.shape();           // shape (eg. [20, 3] is 20 lines with 3 columns)
 
-  // WRITE CSV
+  // WRITE CSV - NOT COMPLETED
   const fileWriter = await CsvFile.initCreate('writing.csv');
   fileWriter.setHeader(['testName', 'testIdx', 'testItem']);
   fileWriter.setData([['john', 1, 2], ['abram', 2, 1]]);
