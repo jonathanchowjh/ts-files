@@ -165,9 +165,11 @@ export class CsvFile {
     );
   }
 
-  async appendCsv(numberOfChunks = 1, useHeader = false): Promise<void> {
+  async appendCsv(numberOfChunks = 1, useHeader = false, preventReset = false): Promise<void> {
     this.writeCsv(numberOfChunks, useHeader, true);
-    this.resetState();
+    if (!preventReset) {
+      this.resetState();
+    }
   }
 
   async appendCsvLine(line: Array<string | number | boolean>): Promise<void> {

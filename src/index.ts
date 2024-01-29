@@ -20,7 +20,7 @@ const main = async () => {
   // WRITE
   const header = ['testName', 'testIdx', 'testItem'];
   const data = [['john', 1, 2], ['abram', 2, 1], ['connie', 3, 12]];
-  const fileWrite = await CsvFile.initCreate('tests/testDir/new.csv');
+  const fileWrite = await CsvFile.initCreate('src/new.csv');
   fileWrite.setHeader(header);
   fileWrite.setData(data);
   fileWrite.appendLine(data[0]);
