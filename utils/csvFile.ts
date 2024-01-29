@@ -115,6 +115,7 @@ export class CsvFile {
     header: Array<string>
   ) {
     if (this.csvHeader.length !== 0) throw new Error('header already initialised');
+    // TODO: validate data and set variables
     this.csvHeader = header;
   }
 
@@ -122,29 +123,69 @@ export class CsvFile {
     data: Array<Array<string | number | boolean>>
   ) {
     if (this.csvData.length !== 0) throw new Error('data already initialised');
+    // TODO: validate data and set variables
     this.csvData = data;
   }
 
   appendLine(
     line: Array<string | number | boolean>
   ) {
+    // TODO: validate data and set variables
     this.csvData.push(line);
   }
 
-  async writeCsv(): Promise<void> {
-    this.data = [] as any;
+  async writeCsv(numberOfChunks = 1, useHeader = true, isAppend = false): Promise<void> {
+    const chunkLength = Math.floor(this.csvData.length / numberOfChunks);
+    let nextIdx = 0;
+    const chunks = [];
+    for (let i = 0; i < numberOfChunks; i++) {
+      let toIdx = Math.min(nextIdx + chunkLength, this.csvData.length);
+      if (i === numberOfChunks - 1) {
+        toIdx = this.csvData.length;
+      }
+      chunks.push(
+        CsvFile.csv2String(
+          this.csvData.slice(nextIdx, toIdx),
+          i !== 0 || !useHeader ? [] : this.csvHeader
+        )
+      );
+      nextIdx += chunkLength;
+    }
+    await FileStaticMethods.writeStream(
+      this.fileName,
+      chunks,
+      {
+        encoding: 'utf8' as BufferEncoding,
+        flags: isAppend ? 'a' : 'w',
+        appendType: 'string',
+        onData: (chunk: string | Buffer): void => {},
+        onEnd: (str: string): string => str,
+        onError: (err: Error): void => {},
+      }
+    );
   }
 
-  async appendCsv(): Promise<void> {
-    this.data = [] as any;
+  async appendCsv(numberOfChunks = 1, useHeader = false): Promise<void> {
+    this.writeCsv(numberOfChunks, useHeader, true);
+    this.resetState();
   }
 
-  async appendCsvLine(): Promise<void> {
-    this.data = [] as any;
-  }
-
-  async appendCsvUpdate(): Promise<void> {
-    this.data = [] as any;
+  async appendCsvLine(line: Array<string | number | boolean>): Promise<void> {
+    await FileStaticMethods.writeStream(
+      this.fileName,
+      CsvFile.csv2String(
+        [line],
+        []
+      ),
+      {
+        encoding: 'utf8' as BufferEncoding,
+        flags: 'a',
+        appendType: 'string',
+        onData: (chunk: string | Buffer): void => {},
+        onEnd: (str: string): string => str,
+        onError: (err: Error): void => {},
+      }
+    );
   }
 
   resetState() {
@@ -229,6 +270,37 @@ export class CsvFile {
    * PRIVATE STATIC METHODS
    * ============================================
    */
+
+  private static csv2String(
+    data: Array<Array<string | number | boolean>>,
+    header: Array<string>
+  ): string {
+    if (header.length === 0 && data.length === 0) return '';
+    const lineLength = header.length === 0 ? data[0].length : header.length;
+    let ret = header.reduce((prev, curr) => `${prev}${curr},`, '').slice(0, -1);
+    ret += header.length === 0 ? '' : '\n';
+    for (let i = 0; i < data.length; i++) {
+      let line = data[i];
+      if (line.length < lineLength) {
+        Array.from(Array(lineLength - line.length).keys()).forEach(() => line.push(''));
+      } else if (line.length > lineLength) {
+        line = line.slice(0, lineLength);
+      }
+      ret += ((
+        line.reduce((prev, curr) => `${prev.toString()}${curr.toString()},`, '')
+      ) as string).slice(0, -1);
+      ret += '\n';
+    }
+    return ret;
+  }
+
+  // TODO
+  private static string2Csv(
+    str: string,
+    isFirstChunk: boolean
+  ): [Array<Array<string | number | boolean>>, Array<string>] {
+    return [[], []];
+  }
 
   private static formatData(
     column: string,

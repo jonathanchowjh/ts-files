@@ -40,9 +40,10 @@ export class FileStaticMethods {
   // Usage: await read(await root('constants.json')) => string
   static writeStream(
     fullLoc: string,
-    data: string | Array<Buffer>,
+    data: string | Array<string> | Array<Buffer>,
     options = {
       encoding: 'utf8' as BufferEncoding,
+      flags: 'w',
       appendType: 'string', // string / bufferArray
       onData: (chunk: string | Buffer): void => {},
       onEnd: (str: string): string => str,
@@ -54,7 +55,10 @@ export class FileStaticMethods {
         reject('Invalid File Name');
       }
       const finished = util.promisify(stream.finished);
-      const writable = fs.createWriteStream(fullLoc, { encoding: options.encoding });
+      const writable = fs.createWriteStream(
+        fullLoc,
+        { encoding: options.encoding, flags: options.flags }
+      );
       const iterable = typeof data === 'string' ? [data] : data;
       for await (const chunk of iterable) {
         options.onData(chunk);
@@ -65,6 +69,7 @@ export class FileStaticMethods {
       writable.end();
       await finished(writable);
       writable.close();
+      options.onEnd('');
       resolve();
     });
   }

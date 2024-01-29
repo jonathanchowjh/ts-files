@@ -13,7 +13,7 @@ import { CsvFile, FileStaticMethods } from 'ts-files'
 
 const main = async () => {
   // READ CSV
-  const file = await CsvFile.init('sample.csv');
+  const file = await CsvFile.initCreate('sample.csv');
   await file.readCsv(1);  // reading csv in chunks, with 1 header line
   file.header();          // header (as Array<string>)
   file.data();            // data (as Array<Array<string | number | boolean>>)
