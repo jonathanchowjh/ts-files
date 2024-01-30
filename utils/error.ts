@@ -5,7 +5,7 @@
 // Usage: throw new UtilsError('err msg')
 export class UtilsError extends Error {
   constructor(error: string, errorSource?: string) {
-    const name = `${errorSource ?? 'ts-methods'}::${stackTrace()[1]}::${error}`;
+    const name = `${errorSource ?? 'ts-files'}::${stackTrace()[1]}::${error}`;
     super(name);
     Object.setPrototypeOf(this, UtilsError.prototype);
   }

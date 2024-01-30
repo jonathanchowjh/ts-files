@@ -6,6 +6,7 @@ typechain
 typechain-types
 dist
 .DS_Store
+package-lock.json
 
 constants.json
 storage

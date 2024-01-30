@@ -41,6 +41,15 @@ export class CsvFile {
     return CsvFile.init(fileName);
   }
 
+  async read(): Promise<string> {
+    this.stringData = await CsvFile.static.read(this.fileName);
+    return this.stringData;
+  }
+
+  async write(data: string): Promise<void> {
+    return CsvFile.static.write(this.fileName, data);
+  }
+
   data() {
     return this.csvData;
   }
@@ -69,15 +78,6 @@ export class CsvFile {
     }
     // eslint-disable-next-line
     console.table(ret);
-  }
-
-  async read(): Promise<string> {
-    this.stringData = await CsvFile.static.read(this.fileName);
-    return this.stringData;
-  }
-
-  async write(data: string): Promise<void> {
-    return CsvFile.static.write(this.fileName, data);
   }
 
   async readCsv(
@@ -173,6 +173,7 @@ export class CsvFile {
   }
 
   async appendCsvLine(line: Array<string | number | boolean>): Promise<void> {
+    this.csvData.push(line);
     await FileStaticMethods.writeStream(
       this.fileName,
       CsvFile.csv2String(
