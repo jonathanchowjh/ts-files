@@ -45,14 +45,15 @@ export class JsonFile {
     return JsonFile.static.write(this.fileName, data);
   }
 
-  setFull(data: { [x: string]: JSONValue } | Array<JSONValue>) {
+  setFull(data: { [x: string]: JSONValue } | Array<JSONValue>): JsonFile {
     this.jsonData = data;
+    return this;
   }
 
   parse(
     parsers: Array<string | ((a: any, b: number) => boolean)>,
-    data: JSONValue = this.jsonData,
-    setData: ((a: JSONValue) => JSONValue) | null = null
+    setData: ((a: JSONValue) => JSONValue) | null = null,
+    data: JSONValue = this.jsonData
   ): JSONValue {
     if (parsers.length === 0) {
       if (setData !== null) {
@@ -71,10 +72,13 @@ export class JsonFile {
       if (typeof data !== 'object' || data === null) {
         throw new Error('key parser not at object');
       }
+      if ((data as { [x: string]: JSONValue })[parsers[0]] === undefined) {
+        throw new Error('key undefined');
+      }
       return this.parse(
         parsers.slice(1),
-        (data as { [x: string]: JSONValue })[parsers[0]],
-        setData
+        setData,
+        (data as { [x: string]: JSONValue })[parsers[0]]
       );
     }
     if (typeof parsers[0] === 'function') {
@@ -82,11 +86,13 @@ export class JsonFile {
         throw new Error('function parser not at array');
       }
       const filter = data.filter(parsers[0]);
-      if (filter.length === 0) return filter;
+      if (filter.length === 0) {
+        throw new Error('filter undefined');
+      }
       return this.parse(
         parsers.slice(1),
-        filter[0],
-        setData
+        setData,
+        filter[0]
       );
     }
     throw new Error('parser has to be string or function');
@@ -96,27 +102,29 @@ export class JsonFile {
     parsers: Array<string | ((a: any, b: number) => boolean)>,
     key: string,
     value: JSONValue,
-    data: JSONValue = this.jsonData
-  ) {
-    return this.parse(parsers, data, JsonFile.setData([key, value], null));
+    force: boolean = false
+  ): JsonFile {
+    if (force) this.setForce(parsers, 'string');
+    this.parse(parsers, JsonFile.setData([key, value], null));
+    return this;
   }
 
   setArray(
     parsers: Array<string | ((a: any, b: number) => boolean)>,
     index: number | null,
     indexOf: string | boolean | number | null,
-    value: JSONValue,
-    data: JSONValue = this.jsonData
-  ) {
-    return this.parse(parsers, data, JsonFile.setData(null, [index, indexOf, value]));
+    value: JSONValue
+  ): JsonFile {
+    this.parse(parsers, JsonFile.setData(null, [index, indexOf, value]));
+    return this;
   }
 
   push(
     parsers: Array<string | ((a: any, b: number) => boolean)>,
-    value: JSONValue,
-    data: JSONValue = this.jsonData
-  ) {
-    return this.parse(parsers, data, JsonFile.setData(null, [null, null, value]));
+    value: JSONValue
+  ): JsonFile {
+    this.parse(parsers, JsonFile.setData(null, [null, null, value]));
+    return this;
   }
 
   async writeJson() {
@@ -140,6 +148,28 @@ export class JsonFile {
    * PRIVATE METHODS
    * ============================================
    */
+
+  private setForce(
+    parsers: Array<string | ((a: any, b: number) => boolean)>,
+    lastParser: 'string' | 'function'
+  ) {
+    for (let i = 0; i < parsers.length; i++) {
+      const currParser = typeof parsers[i];
+      const nextParser = i + 1 >= parsers.length ? lastParser : typeof parsers[i + 1];
+      const value = nextParser === 'string' ? {} : [];
+      if (currParser === 'string') {
+        this.parse(
+          parsers.slice(0, i),
+          JsonFile.setData([parsers[i] as string, value], null)
+        );
+        continue;
+      }
+      if (currParser === 'function') {
+        throw new Error('cannot force set array');
+      }
+      throw new Error('parser has to be string or function');
+    }
+  }
 
   /**
    * ============================================
@@ -170,11 +200,18 @@ export class JsonFile {
         }
         const [i, io, v] = setArray;
         if (i !== null) {
+          if (i < 0 || i >= data.length) {
+            throw new Error('setArray: indexOf not in array');
+          }
           data[i] = v;
           return data;
         }
         if (io !== null) {
-          data[data.indexOf(io)] = v;
+          const dataIdx = data.indexOf(io);
+          if (dataIdx === -1) {
+            throw new Error('setArray: indexOf not in array');
+          }
+          data[dataIdx] = v;
           return data;
         }
         data.push(v);

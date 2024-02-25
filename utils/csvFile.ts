@@ -166,7 +166,7 @@ export class CsvFile {
   }
 
   async appendCsv(numberOfChunks = 1, useHeader = false, preventReset = false): Promise<void> {
-    this.writeCsv(numberOfChunks, useHeader, true);
+    await this.writeCsv(numberOfChunks, useHeader, true);
     if (!preventReset) {
       this.resetState();
     }

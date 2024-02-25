@@ -3,7 +3,7 @@ import { FileStaticMethods } from './fsStatic';
 export class TxtFile {
   public static static = FileStaticMethods;
 
-  public readonly fileName: string = '';
+  public readonly fileName: string;
 
   public readonly encoding: BufferEncoding;
 
@@ -12,9 +12,6 @@ export class TxtFile {
   constructor(fileName: string, options = { encoding: 'utf8' }) {
     this.fileName = fileName;
     this.encoding = options.encoding as BufferEncoding;
-    if (!this.fileName.endsWith('.csv')) {
-      throw new Error('invalid file type');
-    }
   }
 
   static async init(fileName: string) {
@@ -36,8 +33,65 @@ export class TxtFile {
     return this.stringData;
   }
 
-  async write(data: string): Promise<void> {
-    return TxtFile.static.write(this.fileName, data);
+  async write(): Promise<void> {
+    return TxtFile.static.write(this.fileName, this.stringData);
+  }
+
+  set(data: string): TxtFile {
+    this.stringData = data;
+    return this;
+  }
+
+  data(): string {
+    return this.stringData;
+  }
+
+  async readStream(
+    csvHeaderLines = 1,
+    options = {
+      encoding: this.encoding,
+      delimiter: ',',
+      columnOptions: {
+        trim: true,
+        ltrim: false,
+        rtrim: false,
+        parseBooleans: true,
+        parseNumbers: true
+      }
+    }
+  ): Promise<string> {
+    const str = await FileStaticMethods.readStream(
+      this.fileName,
+      {
+        encoding: options.encoding,
+        appendType: 'string', // string / bufferArray
+        onData: (data: string, chunk: string | Buffer): string => data + chunk,
+        onEnd: (data: string): string => data,
+        onError: (err: Error): void => {},
+      }
+    );
+    return str;
+  }
+
+  async writeStream(
+    numberOfChunks = 1,
+    isAppend = false,
+    onData = (chunk: string | Buffer): void => {},
+    onEnd = (str: string): string => str,
+    onError = (err: Error): void => {},
+  ): Promise<void> {
+    await FileStaticMethods.writeStream(
+      this.fileName,
+      TxtFile.splitEveryN(this.stringData, Math.ceil(this.stringData.length / numberOfChunks)),
+      {
+        encoding: 'utf8' as BufferEncoding,
+        flags: isAppend ? 'a' : 'w',
+        appendType: 'string',
+        onData,
+        onEnd,
+        onError,
+      }
+    );
   }
 
   /**
@@ -52,54 +106,10 @@ export class TxtFile {
    * ============================================
    */
 
-  private static formatData(
-    column: string,
-    options = {
-      trim: true,
-      ltrim: false,
-      rtrim: false,
-      parseBooleans: true,
-      parseNumbers: true
+  // eslint-disable-next-line
+  private static *splitEveryN(str: string, n: number): Generator<string> {
+    for (let index = 0; index < str.length; index += n) {
+      yield str.slice(index, index + n);
     }
-  ): string | number | boolean {
-    const PARSE_FLOAT_TEST = /^[-+]?\d+(?:\.\d*)?(?:[eE]\+\d+)?$|^(?:\d+)?\.\d+(?:e+\d+)?$|^[-+]?Infinity$|^[-+]?NaN$/;
-    let col = column;
-    if (options.trim) {
-      col = col.trim();
-    } else if (options.ltrim) {
-      col = col.replace(/^\s+/, '');
-    } else if (options.rtrim) {
-      col = col.replace(/\s+$/, '');
-    }
-    if (options.parseBooleans) {
-      if (col === 'true') return true;
-      if (col === 'false') return false;
-    }
-    if (options.parseNumbers) {
-      if (PARSE_FLOAT_TEST.test(col)) {
-        return parseFloat(col);
-      }
-    }
-    return col;
-  }
-
-  private static splitText(
-    text: string,
-    segments: number,
-    delimiter = ',',
-    useDefault = false
-  ) {
-    if (useDefault) return text.split(delimiter);
-    const ret: string[] = [];
-    let lastIdx = 0;
-    for (let i = 0; i < text.length; i++) {
-      if (text[i] === delimiter) {
-        ret.push(text.slice(lastIdx, i));
-        lastIdx = i + 1;
-        if (segments === ret.length + 1) break;
-      }
-    }
-    ret.push(text.slice(lastIdx, text.length));
-    return ret;
   }
 }

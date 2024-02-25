@@ -40,7 +40,7 @@ export class FileStaticMethods {
   // Usage: await read(await root('constants.json')) => string
   static writeStream(
     fullLoc: string,
-    data: string | Array<string> | Array<Buffer>,
+    data: string | Array<string> | Array<Buffer> | Generator<string>,
     options = {
       encoding: 'utf8' as BufferEncoding,
       flags: 'w',
